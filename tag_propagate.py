@@ -12,6 +12,7 @@ from typing import List
 import boto3
 from botocore.exceptions import ClientError
 
+
 TARGET_REGIONS = [
     "us-east-1",
     "us-east-2",
@@ -31,6 +32,84 @@ TARGET_REGIONS = [
     "eu-north-1",
     "sa-east-1"
 ]
+
+class ListHelpAction(argparse.Action):
+    def __call__(self, parser, namespace, values, option_string=None):
+        print(
+            "usage: tagging [OPTIONS] {all,set,dry-run,show} [value]\n"
+        )
+        print("Description:")
+        print("  Ultimate Tag Propagator – EC2 + EFS + ALL FSx types in a single command!\n")
+
+        print("Modes (positional arguments):")
+        print("  all       Process all supported regions in DRY-RUN or APPLY mode.")
+        print("  set       Process a single region only. Example: tagging set us-east-1 --apply")
+        print("  dry-run   Force DRY-RUN mode (all or one region). Never applies changes.")
+        print("  show      Show resources only (no tagging, no lineage, no changes).\n")
+
+        print("Value (optional positional):")
+        print("  For 'set'      Region name, e.g. us-east-1")
+        print("  For 'dry-run'  Optional region (default: all regions)")
+        print("  For 'show'     Optional region (default: all regions)\n")
+
+        print("Options:")
+        print("  -h, --help, --h   Show this help message and exit.")
+        print("  --apply           Apply real changes. If not set, everything runs in DRY-RUN mode.")
+        print("  --fix-orphans     ONLY fix orphaned AMI snapshots (no EC2/Storage lineage tagging).")
+        print("  --tag-storage     Also tag EFS + all FSx types (EFS, FSx ONTAP, FSx Lustre, etc.).\n")
+
+        parser.exit(0)
+
+def build_parser() -> argparse.ArgumentParser:
+    parser = argparse.ArgumentParser(
+        prog="tagging",
+        description="Ultimate Tag Propagator – EC2 + EFS + ALL FSx types in a single command!",
+        add_help=False, 
+    )
+
+    # Help custom: -h, --help y --h
+    parser.add_argument(
+        "-h",
+        "--help",
+        "--h",
+        action=ListHelpAction,
+        nargs=0,
+        help="Show this help message and exit.",
+    )
+
+    parser.add_argument(
+        "mode",
+        choices=["all", "set", "dry-run", "show"],
+        help="Operation mode (see --help for details).",
+    )
+
+    parser.add_argument(
+        "value",
+        nargs="?",
+        help="Optional value depending on the selected mode.",
+    )
+
+    # flags
+    parser.add_argument(
+        "--apply",
+        action="store_true",
+        help="Apply real changes. If not set, everything runs in DRY-RUN mode.",
+    )
+
+    parser.add_argument(
+        "--fix-orphans",
+        action="store_true",
+        help="ONLY fix orphaned AMI snapshots (no EC2/Storage lineage tagging).",
+    )
+
+    parser.add_argument(
+        "--tag-storage",
+        action="store_true",
+        help="Also tag EFS + all FSx types in each region.",
+    )
+
+    return parser
+
 
 # =============================================================================
 # ============================== EC2 CODE =====================================
@@ -520,51 +599,8 @@ def main() -> None:
       tagging dry-run [<region>] [--tag-storage] [--fix-orphans]
       tagging show [<region>]
     """
-    parser = argparse.ArgumentParser(
-        prog="tagging",
-        description="Ultimate Tag Propagator – EC2 + EFS + ALL FSx types in a single command!",
-    )
-
-    parser.add_argument(
-        "action",
-        choices=["all", "set", "dry-run", "show"],
-        help=(
-            "Operation mode:\n"
-            "  all      → process all regions\n"
-            "  set      → process a single region\n"
-            "  dry-run  → force dry-run mode (all or one region)\n"
-            "  show     → show resources (no changes)"
-        ),
-    )
-
-    parser.add_argument(
-        "value",
-        nargs="?",
-        help=(
-            "Optional value depending on action:\n"
-            "  set <region>         → region name (e.g. us-east-1)\n"
-            "  dry-run <region>     → region name, or omit for all\n"
-            "  show <region>        → optional region, default: all"
-        ),
-    )
-
-    parser.add_argument(
-        "--apply",
-        action="store_true",
-        help="Apply real changes. If not set, everything runs in DRY-RUN mode.",
-    )
-
-    parser.add_argument(
-        "--fix-orphans",
-        action="store_true",
-        help="ONLY fix orphaned AMI snapshots (no EC2/Storage lineage tagging).",
-    )
-
-    parser.add_argument(
-        "--tag-storage",
-        action="store_true",
-        help="Also tag EFS + all FSx types in each region.",
-    )
+    parser = build_parser()
+    args = parser.parse_args()
 
     args = parser.parse_args()
     action = args.action

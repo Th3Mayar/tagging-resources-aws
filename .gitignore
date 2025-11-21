@@ -49,3 +49,5 @@ tagging_resources_aws.egg-info/
 
 dist/
 *.egg-info
+
+.dev-venv
