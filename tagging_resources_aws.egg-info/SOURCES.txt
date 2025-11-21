@@ -1,9 +1,0 @@
-README.md
-pyproject.toml
-tag_propagate.py
-tagging_resources_aws.egg-info/PKG-INFO
-tagging_resources_aws.egg-info/SOURCES.txt
-tagging_resources_aws.egg-info/dependency_links.txt
-tagging_resources_aws.egg-info/entry_points.txt
-tagging_resources_aws.egg-info/requires.txt
-tagging_resources_aws.egg-info/top_level.txt
