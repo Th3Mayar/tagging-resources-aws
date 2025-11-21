@@ -78,7 +78,7 @@ def build_parser() -> argparse.ArgumentParser:
     )
 
     parser.add_argument(
-        "mode",
+        "action",
         choices=["all", "set", "dry-run", "show"],
         help="Operation mode (see --help for details).",
     )
@@ -602,7 +602,6 @@ def main() -> None:
     parser = build_parser()
     args = parser.parse_args()
 
-    args = parser.parse_args()
     action = args.action
     value = args.value
 
