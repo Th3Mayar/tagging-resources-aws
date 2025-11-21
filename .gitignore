@@ -3,6 +3,15 @@ __pycache__/
 *.py[cod]
 *$py.class
 
+*.pyc
+
+.deb-venv/
+build-deb/
+tagging_resources_aws.egg-info/
+
+dist/
+*.egg-info
+
 # Files / Versions
 .venv/
 env/
