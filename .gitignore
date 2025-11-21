@@ -31,3 +31,12 @@ htmlcov/
 Thumbs.db
 
 reports/
+
+*.pyc
+
+.deb-venv/
+build-deb/
+tagging_resources_aws.egg-info/
+
+dist/
+*.egg-info
