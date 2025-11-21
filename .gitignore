@@ -1,0 +1,33 @@
+# --- Python basics ---
+__pycache__/
+*.py[cod]
+*$py.class
+
+# Files / Versions
+.venv/
+env/
+venv/
+.python-version
+*.env
+.env.*
+
+# testing
+.pytest_cache/
+.coverage
+htmlcov/
+.mypy_cache/
+.dmypy.json
+.pyre/
+
+# Logs
+*.log
+
+.vscode/
+.idea/
+*.swp
+*.swo
+
+.DS_Store
+Thumbs.db
+
+reports/

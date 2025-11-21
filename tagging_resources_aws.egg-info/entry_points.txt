@@ -1,0 +1,2 @@
+[console_scripts]
+tagging = tag_propagate:main
