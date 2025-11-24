@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 AWS Ultimate Tag Propagator – Name + Empty Key Tag
-Now with optional --tag-storage to cover EFS + ALL FSx types
+Now with Cost Allocation Tags activation (tagging activate)
 """
 
 import argparse
@@ -12,7 +12,7 @@ from typing import List
 import boto3
 from botocore.exceptions import ClientError
 
-__version__ = "0.1.3"
+__version__ = "0.1.4"
 
 TARGET_REGIONS = [
     "us-east-1",
@@ -61,54 +61,113 @@ class ListHelpAction(argparse.Action):
 
         parser.exit(0)
 
+# =============================================================================
+# COST ALLOCATION TAGS ACTIVATION
+# =============================================================================
+def activate_cost_allocation_tags(regions: List[str], dry_run: bool = True) -> None:
+    """
+    Activate all eligible tag keys as Cost Allocation Tags in AWS Billing.
+    Uses the correct 2025 API: list_cost_allocation_tags + put_cost_allocation_tags
+    """
+    print(f"\n[COST ALLOCATION TAGS] Activating eligible tag keys")
+    print(f"Regions: {', '.join(regions) if regions else 'ALL'}")
+    print(f"Mode: {'DRY-RUN' if dry_run else 'APPLY'}\n")
+
+    billing = boto3.client('ce')
+
+    try:
+        # CORRECT 2025 API
+        current = billing.list_cost_allocation_tags()
+        active_keys = {tag['TagKey'] for tag in current.get('CostAllocationTags', [])}
+        print(f"Currently active Cost Allocation Tags: {len(active_keys)}")
+    except ClientError as e:
+        print(f"[ERROR] Cannot list Cost Allocation Tags: {e}")
+        return
+
+    all_keys: Set[str] = set()
+    for region in regions:
+        print(f"  Scanning region {region.upper()}...")
+        ec2 = boto3.client('ec2', region_name=region)
+        try:
+            paginator = ec2.get_paginator('describe_tags')
+            for page in paginator.paginate(Filters=[{'Name': 'resource-type', 'Values': ['instance', 'volume', 'snapshot']}]):
+                for tag in page['Tags']:
+                    if tag['Key'].startswith('aws:'):
+                        continue
+                    all_keys.add(tag['Key'])
+        except ClientError as e:
+            print(f"    [WARN] Could not scan tags in {region}: {e}")
+
+    eligible = all_keys - active_keys
+    print(f"\nFound {len(all_keys)} unique tag keys → {len(eligible)} eligible for activation")
+
+    if not eligible:
+        print("No new Cost Allocation Tags to activate.")
+        return
+
+    print("\nTag keys to activate:")
+    for key in sorted(eligible):
+        status = "PLAN" if dry_run else "APPLY"
+        print(f"    [{status}] {key}")
+
+    if dry_run:
+        print("\nDRY-RUN: No changes made. Use --apply to activate.")
+        return
+
+    try:
+        # CORRECT 2025 API FOR ACTIVATION
+        billing.put_cost_allocation_tags(TagKeys=list(eligible))
+        print(f"\nSUCCESS: {len(eligible)} Cost Allocation Tags activated!")
+        print("Cost Explorer will reflect these tags within 24-48 hours.")
+    except ClientError as e:
+        print(f"[ERROR] Failed to activate Cost Allocation Tags: {e}")
+
+
+
 def build_parser() -> argparse.ArgumentParser:
     parser = argparse.ArgumentParser(
         prog="tagging",
-        description="Ultimate Tag Propagator – EC2 + EFS + ALL FSx types in a single command!",
-        add_help=False, 
+        description="Ultimate Tag Propagator – EC2 + EFS + ALL FSx types + Cost Allocation Tags activation",
+        add_help=False,
     )
 
     # Help custom: -h, --help y --h
     parser.add_argument(
-        "-h",
-        "--help",
-        "--h",
+        "-h", "--help", "--h",
         action=ListHelpAction,
         nargs=0,
         help="Show this help message and exit.",
     )
 
+    # Main command
     parser.add_argument(
         "action",
-        choices=["all", "set", "dry-run", "show"],
+        choices=["all", "set", "dry-run", "show", "activate"],
         help="Operation mode (see --help for details).",
     )
 
     parser.add_argument(
         "value",
         nargs="?",
-        help="Optional value depending on the selected mode.",
+        help="Optional region value for 'set', 'dry-run', 'show' or 'activate'.",
     )
 
-    # flags
+    # Global flags
     parser.add_argument(
         "--apply",
         action="store_true",
         help="Apply real changes. If not set, everything runs in DRY-RUN mode.",
     )
-
     parser.add_argument(
         "--fix-orphans",
         action="store_true",
         help="ONLY fix orphaned AMI snapshots (no EC2/Storage lineage tagging).",
     )
-
     parser.add_argument(
         "--tag-storage",
         action="store_true",
         help="Also tag EFS + all FSx types in each region.",
     )
-
     parser.add_argument(
         "-v", "--version", "--v",
         action="version",
@@ -612,6 +671,15 @@ def main() -> None:
 
     action = args.action
     value = args.value
+
+    # --------------------------------------------------
+    # tagging activate – Cost Allocation Tags
+    # --------------------------------------------------
+    if action == "activate":
+        regions = [value] if value else TARGET_REGIONS
+        dry_run = not args.apply
+        activate_cost_allocation_tags(regions, dry_run)
+        return
 
     # --------------------------------------------------
     # Resolve DRY-RUN behavior

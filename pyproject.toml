@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "tagging-resources-aws"
-version = "0.1.0"
+version = "0.1.4"
 description = "AWS Ultimate Tag Propagator – EC2 + EFS + FSx tagging with FinOps focus"
 readme = "README.md"
 requires-python = ">=3.10"
@@ -19,5 +19,4 @@ dependencies = [
 py-modules = ["tag_propagate"]
 
 [project.scripts]
-# Here we define the Linux-style command:
 tagging = "tag_propagate:main"
