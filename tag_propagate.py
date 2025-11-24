@@ -12,6 +12,7 @@ from typing import List
 import boto3
 from botocore.exceptions import ClientError
 
+__version__ = "0.1.3"
 
 TARGET_REGIONS = [
     "us-east-1",
@@ -106,6 +107,13 @@ def build_parser() -> argparse.ArgumentParser:
         "--tag-storage",
         action="store_true",
         help="Also tag EFS + all FSx types in each region.",
+    )
+
+    parser.add_argument(
+        "-v", "--version", "--v",
+        action="version",
+        version=f"%(prog)s {__version__}",
+        help="Show version and exit.",
     )
 
     return parser
