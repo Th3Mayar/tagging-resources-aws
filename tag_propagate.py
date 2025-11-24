@@ -12,7 +12,7 @@ from typing import List
 import boto3
 from botocore.exceptions import ClientError
 
-__version__ = "0.1.4"
+__version__ = "0.1.5"
 
 TARGET_REGIONS = [
     "us-east-1",
