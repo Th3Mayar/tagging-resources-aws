@@ -36,11 +36,12 @@ TARGET_REGIONS = [
 
 class ListHelpAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print(
-            "usage: tagging [OPTIONS] {all,set,dry-run,show} [value]\n"
-        )
+        print("usage: tagging [OPTIONS] {all,set,dry-run,show} [value]\n")
+
         print("Description:")
-        print("  Ultimate Tag Propagator – EC2 + EFS + ALL FSx types in a single command!\n")
+        print("  Ultimate Tag Propagator – EC2 + EFS + ALL FSx types in a single command!")
+        print("  By default everything runs in DRY-RUN mode. To ACTIVATE real changes,")
+        print("  you MUST explicitly add --apply at the end of the command.\n")
 
         print("Modes (positional arguments):")
         print("  all       Process all supported regions in DRY-RUN or APPLY mode.")
@@ -55,10 +56,28 @@ class ListHelpAction(argparse.Action):
 
         print("Options:")
         print("  -h, --help, --h   Show this help message and exit.")
-        print("  --apply           Apply real changes. If not set, everything runs in DRY-RUN mode.")
+        print("  -v, --version     Show CLI version and exit.")
+        print("  --apply           ACTIVATE APPLY MODE (real changes).")
+        print("                    If not set, everything runs in DRY-RUN mode.")
         print("  --fix-orphans     ONLY fix orphaned AMI snapshots (no EC2/Storage lineage tagging).")
         print("  --tag-storage     Also tag EFS + all FSx types (EFS, FSx ONTAP, FSx Lustre, etc.).\n")
 
+        print("Examples:")
+        print("  tagging all")
+        print("      → Dry-run across all default regions (no writes).")
+        print("  tagging all --apply")
+        print("      → APPLY MODE activated for all default regions.")
+        print("  tagging set us-east-1")
+        print("      → Dry-run only in us-east-1.")
+        print("  tagging set us-east-1 --apply")
+        print("      → APPLY MODE activated only in us-east-1.")
+        print("  tagging dry-run eu-west-3")
+        print("      → Force dry-run in eu-west-3 even if --apply is present elsewhere.")
+        print("  tagging show")
+        print("      → List resources only, no tagging.")
+        print("  tagging --version")
+        print("      → Show current tagging CLI version.\n")
+        
         parser.exit(0)
 
 # =============================================================================
