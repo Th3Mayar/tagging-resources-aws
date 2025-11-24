@@ -1,0 +1,6 @@
+Origin: tagging-resources-aws
+Label: tagging-resources-aws
+Suite: stable
+Codename: stable
+Architectures: amd64
+Components: main
