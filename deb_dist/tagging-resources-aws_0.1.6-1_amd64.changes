@@ -1,0 +1,26 @@
+Format: 1.8
+Date: Wed, 26 Nov 2025 16:20:44 -0400
+Source: tagging-resources-aws
+Binary: python3-tagging-resources-aws
+Built-For-Profiles: noudeb
+Architecture: all
+Version: 0.1.6-1
+Distribution: stable
+Urgency: low
+Maintainer: None <None>
+Changed-By: None <None>
+Description:
+ python3-tagging-resources-aws - AWS Ultimate Tag Propagator – EC2 + EFS + FSx tagging with F
+Changes:
+ tagging-resources-aws (0.1.6-1) stable; urgency=low
+ .
+   * source package automatically created by stdeb 0.9.0.post2
+Checksums-Sha1:
+ 9368e0159619b4e03e9719d73131e267eb0b9367 13182 python3-tagging-resources-aws_0.1.6-1_all.deb
+ 79a8b23ed5f3dc490867fb78cb24e5fc4db03630 6732 tagging-resources-aws_0.1.6-1_amd64.buildinfo
+Checksums-Sha256:
+ 22defebaa144e8e7df98a80f6fcb87cd4004cd0b8967ceedaea0d7b865409689 13182 python3-tagging-resources-aws_0.1.6-1_all.deb
+ 75f384ff3c9b37135dcb8e67de841640d8afd1c88c53966eec0bd8914e23c2d5 6732 tagging-resources-aws_0.1.6-1_amd64.buildinfo
+Files:
+ 3dd95df84d36126ab28c7e3e0c56dac0 13182 python optional python3-tagging-resources-aws_0.1.6-1_all.deb
+ ff79982ce73d3858660089920dcf56b3 6732 python optional tagging-resources-aws_0.1.6-1_amd64.buildinfo

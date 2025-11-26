@@ -1,0 +1,7 @@
+#!/usr/bin/make -f
+
+export PYBUILD_NAME=tagging-resources-aws
+%:
+	dh $@ --with python3 --buildsystem=pybuild
+
+
