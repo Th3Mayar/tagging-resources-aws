@@ -1,0 +1,13 @@
+tagging-resources-aws (0.1.6) stable; urgency=medium
+
+  * Added support for ec2, ebs, volumes, snapshots, fsx, and efs subcommands
+  * Included bash completion support for all commands
+  * Updated autocompletado to show all available subcommands
+
+ -- Jose Francisco Henriquez <your-email@example.com>  Tue, 26 Nov 2025 12:00:00 +0000
+
+tagging-resources-aws (0.1.5) stable; urgency=medium
+
+  * Previous release
+
+ -- Jose Francisco Henriquez <your-email@example.com>  Mon, 25 Nov 2025 12:00:00 +0000

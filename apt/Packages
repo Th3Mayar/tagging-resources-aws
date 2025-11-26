@@ -1,4 +1,68 @@
 Package: tagging-resources-aws
+Version: 0.1.3
+Architecture: all
+Maintainer: Jose Francisco <josehenriquez.02.26@gmail.com>
+Depends: python3, python3-boto3
+Filename: ./pool/main/t/tagging-resources-aws/tagging-resources-aws_0.1.3_all.deb
+Size: 6842
+MD5sum: 8688a3b143f8130a34a8210ac9abab0e
+SHA1: 52fb26f28fd34b222b90092c50870ffd6073c6cd
+SHA256: 3f2e384fc36d2570bfc600c00fc18c516a3b8f20b43cffd2d311465bc894cdca
+Section: utils
+Priority: optional
+Description: AWS tagging toolkit (tag propagator and helpers)
+ Tagging utilities for AWS resources (EC2, EBS, EFS, FSx, etc.)
+
+Package: tagging-resources-aws
+Version: 0.1.4
+Architecture: all
+Maintainer: Jose Francisco Henriquez <josehenriquez.02.26@gmail.com>
+Depends: python3, python3-boto3
+Filename: ./pool/main/t/tagging-resources-aws/tagging-resources-aws_0.1.4_all.deb
+Size: 7726
+MD5sum: 05dd33177195ae7d4e5fe0f5a56b6204
+SHA1: 062c21087b70258e4149ad0b8162a7302cf6387e
+SHA256: 20617d0b09f9377c3648abf2949a9a24553a5e877c97fdc6f9e367bd217c642c
+Section: utils
+Priority: optional
+Description: AWS tagging toolkit (tag propagator and helpers)
+ Tagging utilities for AWS resources (EC2, EBS, EFS, FSx, etc.)
+
+Package: tagging-resources-aws
+Version: 0.1.5
+Architecture: all
+Maintainer: Jose Francisco Henriquez <josehenriquez.02.26@gmail.com>
+Depends: python3, python3-boto3
+Recommends: bash-completion
+Filename: ./tagging-resources-aws_0.1.5_all.deb
+Size: 8802
+MD5sum: ac34821d8f9e4d2e58e676b6fad6454f
+SHA1: 4b4fba175d93ad42af51d934b647638de92d18d7
+SHA256: cb26226267675669361666216bc5f09379d96ab9bd4e26635943113e1509747a
+Section: utils
+Priority: optional
+Description: AWS tagging toolkit (EC2, EBS, EFS, FSx lineage)
+ Tagging utilities for AWS resources (EC2, EBS, EFS, FSx, etc.).
+ Enforces consistent Name + lineage tags for FinOps and cost allocation.
+
+Package: tagging-resources-aws
+Version: 0.1.5
+Architecture: all
+Maintainer: Jose Francisco Henriquez <josehenriquez.02.26@gmail.com>
+Depends: python3, python3-boto3
+Recommends: bash-completion
+Filename: ./pool/main/t/tagging-resources-aws/tagging-resources-aws_0.1.5_all.deb
+Size: 8802
+MD5sum: ac34821d8f9e4d2e58e676b6fad6454f
+SHA1: 4b4fba175d93ad42af51d934b647638de92d18d7
+SHA256: cb26226267675669361666216bc5f09379d96ab9bd4e26635943113e1509747a
+Section: utils
+Priority: optional
+Description: AWS tagging toolkit (EC2, EBS, EFS, FSx lineage)
+ Tagging utilities for AWS resources (EC2, EBS, EFS, FSx, etc.).
+ Enforces consistent Name + lineage tags for FinOps and cost allocation.
+
+Package: tagging-resources-aws
 Version: 0.1.6
 Architecture: all
 Maintainer: Jose Francisco Henriquez <josehenriquez.02.26@gmail.com>
@@ -14,4 +78,24 @@ Priority: optional
 Description: AWS tagging toolkit (EC2, EBS, EFS, FSx lineage)
  Tagging utilities for AWS resources (EC2, EBS, EFS, FSx, etc.).
  Enforces consistent Name + lineage tags for FinOps and cost allocation.
+
+Package: tagging-resources-aws
+Version: 0.1.6
+Architecture: all
+Maintainer: Jose Francisco Henriquez <your-email@example.com>
+Installed-Size: 73
+Depends: python3-boto3 (>= 1.34.0), python3:any, bash-completion
+Filename: ./pool/main/t/tagging-resources-aws/tagging-resources-aws_0.1.6_all.deb
+Size: 13224
+MD5sum: 3770acd134fd99f1e3f39322229f2af8
+SHA1: ac061e9281a09c727a0cbe044923b2e8dede28e2
+SHA256: 1c5920300c15999ea43a9cd07b5d077ad66ca59bb0e7c80d4ac438d6015a3f94
+Section: python
+Priority: optional
+Homepage: https://github.com/Th3Mayar/tagging-resources-aws
+Description: Tag propagator and AWS resource tagging toolkit
+ A comprehensive toolkit for managing and propagating tags across AWS resources
+ including EC2, EBS, volumes, snapshots, FSx, and EFS.
+ .
+ This package includes bash completion support for all commands.
 

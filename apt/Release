@@ -1,7 +1,29 @@
-Origin: tagging-resources-aws
-Label: tagging-resources-aws
-Suite: stable
-Codename: stable
-Architectures: amd64 all
-Components: main
-Date: Wed, 26 Nov 2025 16:41:36 +0000
+Date: Wed, 26 Nov 2025 22:00:25 +0000
+MD5Sum:
+ 9d0ee72ba471ca3b2c1b27ac42a24ec3             3953 Packages
+ 2eb89033cf029d21513110a0af8a2b89             1150 Packages.gz
+ c2c3611a50fb79ecd4b769af36562a53               38 Release
+ 660e791345b47665d574ed5a54170f42              170 dists/stable/Release
+ a640072560b44274c804f12c9fa5df1e              648 dists/stable/main/binary-amd64/Packages
+ c2ff38c40bf3348a0e66caa1a9b5f56e              462 dists/stable/main/binary-amd64/Packages.gz
+SHA1:
+ 7bd32e139468e99b4b4a9f979ea815112480c97d             3953 Packages
+ 8114b5e1243c64d397e0b919c0a5ff8f6656c561             1150 Packages.gz
+ c56ee0cd7fa42153a0479baf31884d1513722e1c               38 Release
+ 8362997bf939339e89cc913e1939b86d592491b5              170 dists/stable/Release
+ c243fd8fbe9d374f6ae8515b2c49ec28ee303553              648 dists/stable/main/binary-amd64/Packages
+ 9476a5191d2a1b542767bb92d59cec65a5821d93              462 dists/stable/main/binary-amd64/Packages.gz
+SHA256:
+ 1c7bc6345140af4948e9dfebcaf5c315c46a0abf2a1a62e54827769bf60a1dd2             3953 Packages
+ f4949ebdb6d0229a4066343938a82c57fdb7d8579dda07d676860db53cadb7e0             1150 Packages.gz
+ b8d0d2876c492e6db88c3a24223e9b419daaa70f3081425183d60366fb58ad5d               38 Release
+ 8167b7b610917e28cd947de00f2da489806501f5a527f6f55afd97becd7174dd              170 dists/stable/Release
+ 84c0213a5ed3ca07595b24c3b5a3ede0febbe4c6f8299959228ad9218244e281              648 dists/stable/main/binary-amd64/Packages
+ 119ce310c64acbd899c5f806b566a29b1be9b095745272a1b99db7bb273f266d              462 dists/stable/main/binary-amd64/Packages.gz
+SHA512:
+ 101297030457fc6eb366c7e4868a9d171fb865f7fdaf1a36246caeeef4d3d9102d2e7df0b282d97b9df46588d5627fa05a48e540258b48b94a3a9a1088fe1c33             3953 Packages
+ 674c62368614e9ea7bd8e472d5dd83b20d6b55f428c64ec594b2a9fe08ff209ca9e57e2d3b95e2985a90fe669f45f4592704ec8e875d4cafd72c514ce2df9937             1150 Packages.gz
+ 50d1f204c59b6f38f6f4d4b9c4e65507a1848991549ca84e9225fce919fb74b649d1a2dd5ed9f010f69e071adb67aa0acb6771bcb3b6ae3c0653659e111952a8               38 Release
+ 4a0fa3c4d76f0047b63e0cc6e1589837ad4df5eb65df69d1b86c48d17a5208a0ccc84c7a82ab74b9351666025a6c81bf5b922b3f18b20b9fa88dca9196be2af2              170 dists/stable/Release
+ 1b66ed6656411baf5000fe6efbc16e6927741814ecc3f0fa13ad7cf85c403ff3788af61e5a85c16b8c77efe59b13045c90a33780e15b9711b13b5c01fe16df41              648 dists/stable/main/binary-amd64/Packages
+ 131bd298dc3dfadcd977c5f9c7b361b4d1a334a347e858d964dd4cacec78452168516929c01b3ee6043b150af5e3405987099d4dfc0741e0c4f5249549f0e854              462 dists/stable/main/binary-amd64/Packages.gz
