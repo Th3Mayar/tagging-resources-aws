@@ -2,5 +2,6 @@ Origin: tagging-resources-aws
 Label: tagging-resources-aws
 Suite: stable
 Codename: stable
-Architectures: amd64
+Architectures: amd64 all
 Components: main
+Date: Wed, 26 Nov 2025 16:06:00 +0000
