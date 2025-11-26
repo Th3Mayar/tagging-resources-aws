@@ -14,4 +14,7 @@ setup(
             "tag-propagate=tagging_resources_aws.tag_propagate:main",
         ],
     },
+    data_files=[
+        ("share/bash-completion/completions", ["bash_completion/tagging"]),
+    ]
 )
