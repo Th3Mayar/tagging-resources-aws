@@ -2,7 +2,7 @@ from setuptools import setup, find_packages
 
 setup(
     name="tagging-resources-aws",
-    version="0.1.6",
+    version="0.1.5",
     description="Tag propagator and AWS resource tagging toolkit",
     author="Jose Francisco Henriquez",
     packages=find_packages(),

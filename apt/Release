@@ -1,25 +1,7 @@
-Date: Wed, 26 Nov 2025 19:58:44 +0000
-MD5Sum:
- 0f7b33b11540903f048dc4dfff080555             1157 Packages.gz
- 6cd9f32c01fee563f276efc6602b580f              170 Release
- 660e791345b47665d574ed5a54170f42              170 dists/stable/Release
- a640072560b44274c804f12c9fa5df1e              648 dists/stable/main/binary-amd64/Packages
- c2ff38c40bf3348a0e66caa1a9b5f56e              462 dists/stable/main/binary-amd64/Packages.gz
-SHA1:
- 54ac597301ba23c856633ce1f5375a0d629ec34a             1157 Packages.gz
- 90f54d8dd16186d54263f1874e35b1ee5a0fbe95              170 Release
- 8362997bf939339e89cc913e1939b86d592491b5              170 dists/stable/Release
- c243fd8fbe9d374f6ae8515b2c49ec28ee303553              648 dists/stable/main/binary-amd64/Packages
- 9476a5191d2a1b542767bb92d59cec65a5821d93              462 dists/stable/main/binary-amd64/Packages.gz
-SHA256:
- 59aa352ecc72cfec4ea84f91d4ef80996a464359510b8644734f866f5dd44fe5             1157 Packages.gz
- e6d59c0d224ab6905dfb3634e7da0ad3e1ada4a1e33235608204c740c9aa0fa5              170 Release
- 8167b7b610917e28cd947de00f2da489806501f5a527f6f55afd97becd7174dd              170 dists/stable/Release
- 84c0213a5ed3ca07595b24c3b5a3ede0febbe4c6f8299959228ad9218244e281              648 dists/stable/main/binary-amd64/Packages
- 119ce310c64acbd899c5f806b566a29b1be9b095745272a1b99db7bb273f266d              462 dists/stable/main/binary-amd64/Packages.gz
-SHA512:
- c8f3ab672d4de0a2a71a23a52edec72d65c3518ba0b6929f6cfaa33bf023859449fb57bc78799c26d4501de0148dda39cf21c14f80a7fdeaa447be16054bba89             1157 Packages.gz
- ca8013c5a919ddaa0cd0d20759de97d33917f521b1278022546921204ccd719b243ecc937900bfec1571bf9c240df04a8069308746e67af07a18e8361741beab              170 Release
- 4a0fa3c4d76f0047b63e0cc6e1589837ad4df5eb65df69d1b86c48d17a5208a0ccc84c7a82ab74b9351666025a6c81bf5b922b3f18b20b9fa88dca9196be2af2              170 dists/stable/Release
- 1b66ed6656411baf5000fe6efbc16e6927741814ecc3f0fa13ad7cf85c403ff3788af61e5a85c16b8c77efe59b13045c90a33780e15b9711b13b5c01fe16df41              648 dists/stable/main/binary-amd64/Packages
- 131bd298dc3dfadcd977c5f9c7b361b4d1a334a347e858d964dd4cacec78452168516929c01b3ee6043b150af5e3405987099d4dfc0741e0c4f5249549f0e854              462 dists/stable/main/binary-amd64/Packages.gz
+Origin: tagging-resources-aws
+Label: tagging-resources-aws
+Suite: stable
+Codename: stable
+Architectures: amd64 all
+Components: main
+Date: Wed, 26 Nov 2025 16:41:36 +0000
