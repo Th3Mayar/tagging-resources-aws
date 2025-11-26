@@ -50,4 +50,12 @@ tagging_resources_aws.egg-info/
 dist/
 *.egg-info
 
+# stdeb3 build artifacts
+deb_dist/
+*.tar.gz
+*.dsc
+*.changes
+*.buildinfo
+*.debian.tar.xz
+
 .dev-venv

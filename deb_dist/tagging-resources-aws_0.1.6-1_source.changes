@@ -1,0 +1,29 @@
+Format: 1.8
+Date: Wed, 26 Nov 2025 16:20:44 -0400
+Source: tagging-resources-aws
+Built-For-Profiles: noudeb
+Architecture: source
+Version: 0.1.6-1
+Distribution: stable
+Urgency: low
+Maintainer: None <None>
+Changed-By: None <None>
+Changes:
+ tagging-resources-aws (0.1.6-1) stable; urgency=low
+ .
+   * source package automatically created by stdeb 0.9.0.post2
+Checksums-Sha1:
+ 12433eaea04647e4e071b397d38c7a64ef396b7d 965 tagging-resources-aws_0.1.6-1.dsc
+ 2722fda36441492707d3185f0c352c29db402565 15087 tagging-resources-aws_0.1.6.orig.tar.gz
+ b8f3ee968427217cc5b32fc56f086853dfc68a0b 1424 tagging-resources-aws_0.1.6-1.debian.tar.xz
+ bde7c95d58dd14bfcaf9bd490b1fff07c60507dc 6655 tagging-resources-aws_0.1.6-1_source.buildinfo
+Checksums-Sha256:
+ fad8e5cb26447fb5259137c6057fcd3afe80507113ac1a43123b039a6df4021c 965 tagging-resources-aws_0.1.6-1.dsc
+ 52eba78b6cfc18903b24a7c09e512be03f18a9336f641d5f743daad321f85bac 15087 tagging-resources-aws_0.1.6.orig.tar.gz
+ 72493188d713c91635e0b3ae1bfd3cae4821ac7b7a8a2aa9b117382700b2aa0e 1424 tagging-resources-aws_0.1.6-1.debian.tar.xz
+ 9e730ba8e10c3a1f2158e6ed66bfd8ee0e7f2c4f8fcfe89a53adb3ab67b72ded 6655 tagging-resources-aws_0.1.6-1_source.buildinfo
+Files:
+ f4cf4b0ceb5e7b8bafe157f0b10e5dd4 965 python optional tagging-resources-aws_0.1.6-1.dsc
+ 769c08d89bf96b48225d9d19452450bc 15087 python optional tagging-resources-aws_0.1.6.orig.tar.gz
+ c65b28cad356f160e9e54812d693efe2 1424 python optional tagging-resources-aws_0.1.6-1.debian.tar.xz
+ a4e17c2b3c6391ca9856cb124fcfb5d5 6655 python optional tagging-resources-aws_0.1.6-1_source.buildinfo

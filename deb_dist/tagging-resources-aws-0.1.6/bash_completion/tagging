@@ -1,0 +1,32 @@
+# Bash completion for `tagging` CLI
+
+_tagging_completion() {
+  local cur prev
+  COMPREPLY=()
+  cur="${COMP_WORDS[COMP_CWORD]}"
+  prev="${COMP_WORDS[COMP_CWORD-1]}"
+
+  # main subcommands
+  local subcommands="all set dry-run show activate ec2 ebs volumes snapshots fsx efs"
+  # global options
+  local opts="--apply --fix-orphans --tag-storage --help --h --version -h -v"
+
+  # First argument after `tagging` → subcommand
+  if [[ $COMP_CWORD -eq 1 ]]; then
+    COMPREPLY=( $(compgen -W "$subcommands" -- "$cur") )
+    return 0
+  fi
+
+  # Second argument → region for specific subcommands
+  if [[ $COMP_CWORD -eq 2 && "$prev" =~ ^(set|dry-run|show|activate|ec2|ebs|volumes|snapshots|fsx|efs)$ ]]; then
+    local regions="us-east-1 us-east-2 us-west-1 us-west-2 eu-west-1 eu-west-2 eu-west-3 eu-north-1 ap-south-1 ap-northeast-1"
+    COMPREPLY=( $(compgen -W "$regions" -- "$cur") )
+    return 0
+  fi
+
+  # Other positions → suggest flags
+  COMPREPLY=( $(compgen -W "$opts" -- "$cur") )
+}
+
+# register completion for `tagging`
+complete -F _tagging_completion tagging
