@@ -380,6 +380,173 @@ def process_region(region: str, dry_run: bool, tag_instances: bool = True, tag_v
     print(f"[SUMMARY] {region} → {count} instances processed")
 
 
+def process_all_volumes(region: str, dry_run: bool):
+    """Process ALL EBS volumes in a region, not just those attached to instances."""
+    print(f"\n{'=' * 80}")
+    print(f"REGION: {region.upper()} | Mode: {'DRY-RUN' if dry_run else 'APPLY'}")
+    print(f"{'=' * 80}")
+
+    ec2_client = boto3.client('ec2', region_name=region)
+    
+    print("\n[VOLUMES MODE] Processing all EBS volumes...")
+    paginator = ec2_client.get_paginator('describe_volumes')
+    volume_count = 0
+    
+    for page in paginator.paginate():
+        for volume in page['Volumes']:
+            volume_id = volume['VolumeId']
+            volume_count += 1
+            
+            # Get current tags
+            current_tags = {t['Key']: t['Value'] for t in volume.get('Tags', [])}
+            
+            # Try to get name from attached instance
+            name_value = None
+            machine_key = None
+            
+            for attachment in volume.get('Attachments', []):
+                instance_id = attachment.get('InstanceId')
+                if instance_id:
+                    try:
+                        instance_data = ec2_client.describe_instances(InstanceIds=[instance_id])
+                        if instance_data['Reservations']:
+                            inst = instance_data['Reservations'][0]['Instances'][0]
+                            inst_tags = {t['Key']: t['Value'] for t in inst.get('Tags', [])}
+                            if 'Name' in inst_tags:
+                                name_value = inst_tags['Name']
+                                machine_key = name_value.replace(' ', '-')
+                            else:
+                                name_value = instance_id
+                                machine_key = instance_id
+                            break
+                    except:
+                        pass
+            
+            # If no attached instance, check if volume has a Name tag
+            if not name_value:
+                if 'Name' in current_tags:
+                    name_value = current_tags['Name']
+                    machine_key = name_value.replace(' ', '-')
+                else:
+                    # Volume not attached and no Name tag - skip or use volume ID
+                    continue  # Skip volumes without instances and without Name
+            
+            tags_to_add = []
+            if 'Name' not in current_tags:
+                tags_to_add.append({'Key': 'Name', 'Value': name_value})
+            if machine_key and machine_key not in current_tags:
+                tags_to_add.append({'Key': machine_key, 'Value': ''})
+            
+            if tags_to_add:
+                display = f"{name_value} ({volume_id})" if name_value != volume_id else volume_id
+                print(f"\n[VOLUME] {display}")
+                plan_or_apply(ec2_client, volume_id, tags_to_add, "Volume", dry_run)
+    
+    print(f"\n[SUMMARY] {region} → {volume_count} volumes processed")
+
+
+def process_all_snapshots(region: str, dry_run: bool):
+    """Process ALL EBS snapshots in a region."""
+    print(f"\n{'=' * 80}")
+    print(f"REGION: {region.upper()} | Mode: {'DRY-RUN' if dry_run else 'APPLY'}")
+    print(f"{'=' * 80}")
+
+    ec2_client = boto3.client('ec2', region_name=region)
+    
+    print("\n[SNAPSHOTS MODE] Processing all EBS snapshots...")
+    paginator = ec2_client.get_paginator('describe_snapshots')
+    snapshot_count = 0
+    
+    for page in paginator.paginate(OwnerIds=['self']):
+        for snapshot in page['Snapshots']:
+            snapshot_id = snapshot['SnapshotId']
+            snapshot_count += 1
+            
+            # Get current tags
+            current_tags = {t['Key']: t['Value'] for t in snapshot.get('Tags', [])}
+            
+            # Determine the tag key and name
+            name_value = None
+            machine_key = None
+            
+            # Try to get name from volume
+            volume_id = snapshot.get('VolumeId')
+            if volume_id:
+                try:
+                    volume_data = ec2_client.describe_volumes(VolumeIds=[volume_id])
+                    if volume_data['Volumes']:
+                        vol = volume_data['Volumes'][0]
+                        vol_tags = {t['Key']: t['Value'] for t in vol.get('Tags', [])}
+                        if 'Name' in vol_tags:
+                            name_value = vol_tags['Name']
+                            machine_key = name_value.replace(' ', '-')
+                        else:
+                            # Try to get from attached instance
+                            for attachment in vol.get('Attachments', []):
+                                instance_id = attachment.get('InstanceId')
+                                if instance_id:
+                                    try:
+                                        inst_data = ec2_client.describe_instances(InstanceIds=[instance_id])
+                                        if inst_data['Reservations']:
+                                            inst = inst_data['Reservations'][0]['Instances'][0]
+                                            inst_tags = {t['Key']: t['Value'] for t in inst.get('Tags', [])}
+                                            if 'Name' in inst_tags:
+                                                name_value = inst_tags['Name']
+                                                machine_key = name_value.replace(' ', '-')
+                                            else:
+                                                name_value = instance_id
+                                                machine_key = instance_id
+                                            break
+                                    except:
+                                        pass
+                except:
+                    pass
+            
+            # Check AMI in description if still no name
+            if not name_value:
+                desc = snapshot.get('Description', '')
+                ami_ids = re.findall(r'(ami-[0-9a-f]{8,17})', desc)
+                if ami_ids:
+                    try:
+                        img = ec2_client.describe_images(ImageIds=[ami_ids[0]])['Images'][0]
+                        ami_name = next((t['Value'] for t in img.get('Tags', []) if t['Key'] == 'Name'), None)
+                        if not ami_name:
+                            ami_name = img.get('Name')
+                        if ami_name:
+                            name_value = ami_name
+                            machine_key = re.sub(r'[^a-zA-Z0-9\-]', '-', ami_name)
+                    except:
+                        pass
+            
+            # Check if snapshot already has a Name tag
+            if not name_value and 'Name' in current_tags:
+                name_value = current_tags['Name']
+                machine_key = name_value.replace(' ', '-')
+            
+            # Skip if no valid name found
+            if not name_value:
+                continue
+            
+            tags_to_add = []
+            if 'Name' not in current_tags:
+                tags_to_add.append({'Key': 'Name', 'Value': name_value})
+            if machine_key and machine_key not in current_tags:
+                tags_to_add.append({'Key': machine_key, 'Value': ''})
+            
+            if tags_to_add:
+                display = f"{name_value} ({snapshot_id})" if name_value != snapshot_id else snapshot_id
+                print(f"\n[SNAPSHOT] {display}")
+                plan_or_apply(ec2_client, snapshot_id, tags_to_add, "Snapshot", dry_run)
+    
+    print(f"\n[SUMMARY] {region} → {snapshot_count} snapshots processed")
+
+
+def process_all_ebs(region: str, dry_run: bool):
+    """Process ALL EBS volumes and snapshots in a region."""
+    process_all_volumes(region, dry_run)
+    process_all_snapshots(region, dry_run)
+
+
 def get_regions(args):
     if args.region:
         return [args.region]
@@ -827,7 +994,7 @@ def main() -> None:
         print(f"Action: EBS ONLY (volumes + snapshots)")
         print(f"Target regions: {', '.join(sorted(regions))}\n")
         for region in sorted(regions):
-            process_region(region, dry_run, tag_instances=False, tag_volumes=True, tag_snapshots=True)
+            process_all_ebs(region, dry_run)
         print("\n" + "═" * 80)
         print("TAG PROPAGATION COMPLETED!")
         print("→ EBS volumes + snapshots processed.")
@@ -839,7 +1006,7 @@ def main() -> None:
         print(f"Action: VOLUMES ONLY")
         print(f"Target regions: {', '.join(sorted(regions))}\n")
         for region in sorted(regions):
-            process_region(region, dry_run, tag_instances=False, tag_volumes=True, tag_snapshots=False)
+            process_all_volumes(region, dry_run)
         print("\n" + "═" * 80)
         print("TAG PROPAGATION COMPLETED!")
         print("→ EBS volumes processed.")
@@ -851,7 +1018,7 @@ def main() -> None:
         print(f"Action: SNAPSHOTS ONLY")
         print(f"Target regions: {', '.join(sorted(regions))}\n")
         for region in sorted(regions):
-            process_region(region, dry_run, tag_instances=False, tag_volumes=False, tag_snapshots=True)
+            process_all_snapshots(region, dry_run)
         print("\n" + "═" * 80)
         print("TAG PROPAGATION COMPLETED!")
         print("→ EBS snapshots processed.")
