@@ -2,15 +2,23 @@
 __pycache__/
 *.py[cod]
 *$py.class
-
 *.pyc
 
+# Virtual environments
 .deb-venv/
+venv/
+.dev-venv/
+
+# Build artifacts
 build-deb/
 tagging_resources_aws.egg-info/
-
 dist/
 *.egg-info
+*.tar.gz
+
+# Root level unnecessary files
+/__init__.py
+/Packages.gz
 
 # Files / Versions
 .venv/
