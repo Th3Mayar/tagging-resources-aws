@@ -36,7 +36,7 @@ TARGET_REGIONS = [
 
 class ListHelpAction(argparse.Action):
     def __call__(self, parser, namespace, values, option_string=None):
-        print("usage: tagging [OPTIONS] {all,set,dry-run,show} [value]\n")
+        print("usage: tagging [OPTIONS] {all,set,dry-run,show,ec2,ebs,volumes,snapshots,fsx,efs} [value]\n")
 
         print("Description:")
         print("  Ultimate Tag Propagator – EC2 + EFS + ALL FSx types in a single command!")
@@ -47,7 +47,13 @@ class ListHelpAction(argparse.Action):
         print("  all       Process all supported regions in DRY-RUN or APPLY mode.")
         print("  set       Process a single region only. Example: tagging set us-east-1 --apply")
         print("  dry-run   Force DRY-RUN mode (all or one region). Never applies changes.")
-        print("  show      Show resources only (no tagging, no lineage, no changes).\n")
+        print("  show      Show resources only (no tagging, no lineage, no changes).")
+        print("  ec2       Process ONLY EC2 instances + volumes + snapshots (all or one region).")
+        print("  ebs       Process ONLY EBS volumes + snapshots (all or one region).")
+        print("  volumes   Process ONLY EBS volumes (all or one region).")
+        print("  snapshots Process ONLY EBS snapshots (all or one region).")
+        print("  fsx       Process ONLY FSx resources (all or one region).")
+        print("  efs       Process ONLY EFS resources (all or one region).\n")
 
         print("Value (optional positional):")
         print("  For 'set'      Region name, e.g. us-east-1")
@@ -75,6 +81,18 @@ class ListHelpAction(argparse.Action):
         print("      → Force dry-run in eu-west-3 even if --apply is present elsewhere.")
         print("  tagging show")
         print("      → List resources only, no tagging.")
+        print("  tagging ec2 --apply")
+        print("      → APPLY MODE for EC2 instances + volumes + snapshots in all regions.")
+        print("  tagging ebs us-east-1")
+        print("      → Dry-run for EBS volumes + snapshots in us-east-1 only.")
+        print("  tagging volumes --apply")
+        print("      → APPLY MODE for EBS volumes only in all regions.")
+        print("  tagging snapshots --apply")
+        print("      → APPLY MODE for snapshots only in all regions.")
+        print("  tagging fsx us-west-2 --apply")
+        print("      → APPLY MODE for FSx resources in us-west-2 only.")
+        print("  tagging efs --apply")
+        print("      → APPLY MODE for EFS resources in all regions.")
         print("  tagging --version")
         print("      → Show current tagging CLI version.\n")
         
@@ -161,7 +179,7 @@ def build_parser() -> argparse.ArgumentParser:
     # Main command
     parser.add_argument(
         "action",
-        choices=["all", "set", "dry-run", "show", "activate"],
+        choices=["all", "set", "dry-run", "show", "activate", "ec2", "ebs", "volumes", "snapshots", "fsx", "efs"],
         help="Operation mode (see --help for details).",
     )
 
@@ -293,32 +311,34 @@ def process_resource(ec2_client, resource_id: str, machine_key: str, name_value:
         print(f"    [ERROR] {resource_type} {resource_id}: {e}", file=sys.stderr)
 
 
-def tag_volumes_and_snapshots(ec2_client, instance, machine_key: str, name_value: str, dry_run: bool):
+def tag_volumes_and_snapshots(ec2_client, instance, machine_key: str, name_value: str, dry_run: bool, tag_volumes: bool = True, tag_snapshots: bool = True):
     volume_ids = []
     for mapping in instance.block_device_mappings:
         vol_id = mapping.get("Ebs", {}).get("VolumeId")
         if not vol_id:
             continue
         volume_ids.append(vol_id)
-        process_resource(ec2_client, vol_id, machine_key, name_value, "Volume", dry_run)
+        if tag_volumes:
+            process_resource(ec2_client, vol_id, machine_key, name_value, "Volume", dry_run)
 
     # Snapshots from volumes
-    if volume_ids:
+    if tag_snapshots and volume_ids:
         paginator = ec2_client.get_paginator('describe_snapshots')
         for page in paginator.paginate(OwnerIds=['self'], Filters=[{'Name': 'volume-id', 'Values': volume_ids}]):
             for snap in page["Snapshots"]:
                 process_resource(ec2_client, snap["SnapshotId"], machine_key, name_value, "Snapshot", dry_run)
 
     # AMI / CreateImage snapshots (by instance-id in description)
-    paginator = ec2_client.get_paginator('describe_snapshots')
-    for page in paginator.paginate(OwnerIds=['self'], Filters=[{'Name': 'description', 'Values': [f'*{instance.id}*']}]):
-        for snap in page["Snapshots"]:
-            if instance.id not in (snap.get("Description") or ""):
-                continue
-            process_resource(ec2_client, snap["SnapshotId"], machine_key, name_value, "Snapshot (AMI)", dry_run)
+    if tag_snapshots:
+        paginator = ec2_client.get_paginator('describe_snapshots')
+        for page in paginator.paginate(OwnerIds=['self'], Filters=[{'Name': 'description', 'Values': [f'*{instance.id}*']}]):
+            for snap in page["Snapshots"]:
+                if instance.id not in (snap.get("Description") or ""):
+                    continue
+                process_resource(ec2_client, snap["SnapshotId"], machine_key, name_value, "Snapshot (AMI)", dry_run)
 
 
-def process_instance(ec2_client, instance, dry_run: bool):
+def process_instance(ec2_client, instance, dry_run: bool, tag_instance: bool = True, tag_volumes: bool = True, tag_snapshots: bool = True):
     instance.load()
     if instance.state["Name"] == "terminated":
         return
@@ -330,19 +350,21 @@ def process_instance(ec2_client, instance, dry_run: bool):
     print(f"\n[PROCESSING] {display} → Using tag key: '{machine_key}'")
 
     # Instance itself
-    current = {t["Key"]: t["Value"] for t in (instance.tags or [])}
-    tags_to_add = []
-    if "Name" not in current:
-        tags_to_add.append({"Key": "Name", "Value": name_value})
-    if machine_key not in current:
-        tags_to_add.append({"Key": machine_key, "Value": ""})
-    plan_or_apply(ec2_client, instance.id, tags_to_add, "EC2 Instance", dry_run)
+    if tag_instance:
+        current = {t["Key"]: t["Value"] for t in (instance.tags or [])}
+        tags_to_add = []
+        if "Name" not in current:
+            tags_to_add.append({"Key": "Name", "Value": name_value})
+        if machine_key not in current:
+            tags_to_add.append({"Key": machine_key, "Value": ""})
+        plan_or_apply(ec2_client, instance.id, tags_to_add, "EC2 Instance", dry_run)
 
     # Volumes + Snapshots
-    tag_volumes_and_snapshots(ec2_client, instance, machine_key, name_value, dry_run)
+    if tag_volumes or tag_snapshots:
+        tag_volumes_and_snapshots(ec2_client, instance, machine_key, name_value, dry_run, tag_volumes, tag_snapshots)
 
 
-def process_region(region: str, dry_run: bool):
+def process_region(region: str, dry_run: bool, tag_instances: bool = True, tag_volumes: bool = True, tag_snapshots: bool = True):
     print(f"\n{'=' * 80}")
     print(f"REGION: {region.upper()} | Mode: {'DRY-RUN' if dry_run else 'APPLY'}")
     print(f"{'=' * 80}")
@@ -352,7 +374,7 @@ def process_region(region: str, dry_run: bool):
 
     count = 0
     for instance in resource.instances.filter(Filters=[{'Name': 'instance-state-name', 'Values': ['running', 'stopped']}]):
-        process_instance(ec2_client, instance, dry_run)
+        process_instance(ec2_client, instance, dry_run, tag_instances, tag_volumes, tag_snapshots)
         count += 1
 
     print(f"[SUMMARY] {region} → {count} instances processed")
@@ -506,25 +528,95 @@ def get_current_tags_storage(client, resource_id_or_arn: str) -> dict:
         return {}
 
 
-def process_efs_and_fsx(region: str, dry_run: bool) -> None:
+def process_efs_and_fsx(region: str, dry_run: bool, process_efs: bool = True, process_fsx: bool = True) -> None:
     """
     Tag EFS FileSystems + AccessPoints and all FSx types (FileSystems, Backups,
     Volumes, SVMs) in the given region.
     """
-    print(f"\n[STORAGE MODE] Processing EFS + FSx in {region.upper()}")
+    if process_efs and process_fsx:
+        print(f"\n[STORAGE MODE] Processing EFS + FSx in {region.upper()}")
+    elif process_efs:
+        print(f"\n[STORAGE MODE] Processing EFS in {region.upper()}")
+    elif process_fsx:
+        print(f"\n[STORAGE MODE] Processing FSx in {region.upper()}")
 
     # === EFS ===
-    try:
-        efs = boto3.client("efs", region_name=region)
+    if process_efs:
+        try:
+            efs = boto3.client("efs", region_name=region)
 
-        response = efs.describe_file_systems()
-        file_systems = response.get("FileSystems", [])
+            response = efs.describe_file_systems()
+            file_systems = response.get("FileSystems", [])
 
-        if not file_systems:
-            print(f"[EFS] No EFS file systems found in {region.upper()}")
-        else:
+            if not file_systems:
+                print(f"[EFS] No EFS file systems found in {region.upper()}")
+            else:
+                for fs in file_systems:
+                    fs_id = fs["FileSystemId"]
+                    name_tag = next(
+                        (t["Value"] for t in fs.get("Tags", []) if t["Key"].lower() == "name"),
+                        None,
+                    )
+                    name = name_tag or fs_id
+                    key = normalize_storage_key(name)
+
+                    print(f"\n[EFS] {name} ({fs_id}) → Using tag key: '{key}'")
+
+                    # FileSystem – tag by FileSystemId (ResourceId)
+                    current = get_current_tags_storage(efs, fs_id)
+                    to_add: List[dict] = []
+                    if "Name" not in current:
+                        to_add.append({"Key": "Name", "Value": name})
+                    if key not in current:
+                        to_add.append({"Key": key, "Value": ""})
+                    plan_or_apply_storage(efs, fs_id, to_add, "EFS FileSystem", dry_run)
+
+                    # Access Points – tag by AccessPointId (fsap-...)
+                    try:
+                        aps = efs.describe_access_points(FileSystemId=fs_id).get("AccessPoints", [])
+                        for ap in aps:
+                            ap_id = ap["AccessPointId"]  # fsap-xxxx
+                            current_ap = get_current_tags_storage(efs, ap_id)
+                            if key in current_ap:
+                                continue
+                            plan_or_apply_storage(
+                                efs,
+                                ap_id,
+                                [{"Key": key, "Value": ""}],
+                                "EFS AccessPoint",
+                                dry_run,
+                            )
+                    except ClientError as e:
+                        print(f"    [WARN] Access Points error: {e}")
+
+                    # NOTE: Mount Targets are not taggable via EFS tagging APIs.
+                    # We intentionally skip them to avoid bogus API calls.
+
+        except ClientError as e:
+            if "AccessDenied" in str(e):
+                print(
+                    f"[EFS] Access denied in {region.upper()} – "
+                    f"ensure elasticfilesystem:DescribeFileSystems/ListTagsForResource/TagResource are allowed."
+                )
+            else:
+                print(f"[EFS] AWS error in {region.upper()}: {e}")
+        except Exception as e:
+            print(f"[EFS] Unexpected error in {region.upper()}: {e}")
+
+    # === FSx ===
+    if process_fsx:
+        try:
+            fsx = boto3.client("fsx", region_name=region)
+            file_systems = fsx.describe_file_systems().get("FileSystems", [])
+
+            if not file_systems:
+                print(f"[FSx] No FSx file systems found in {region.upper()}")
+                return
+
             for fs in file_systems:
                 fs_id = fs["FileSystemId"]
+                fs_type = fs["FileSystemType"]
+                arn = fs["ResourceARN"]
                 name_tag = next(
                     (t["Value"] for t in fs.get("Tags", []) if t["Key"].lower() == "name"),
                     None,
@@ -532,142 +624,77 @@ def process_efs_and_fsx(region: str, dry_run: bool) -> None:
                 name = name_tag or fs_id
                 key = normalize_storage_key(name)
 
-                print(f"\n[EFS] {name} ({fs_id}) → Using tag key: '{key}'")
+                print(f"\n[FSx {fs_type}] {name} ({fs_id}) → Using tag key: '{key}'")
 
-                # FileSystem – tag by FileSystemId (ResourceId)
-                current = get_current_tags_storage(efs, fs_id)
-                to_add: List[dict] = []
+                # FileSystem
+                current = get_current_tags_storage(fsx, arn)
+                to_add_fs: List[dict] = []
                 if "Name" not in current:
-                    to_add.append({"Key": "Name", "Value": name})
+                    to_add_fs.append({"Key": "Name", "Value": name})
                 if key not in current:
-                    to_add.append({"Key": key, "Value": ""})
-                plan_or_apply_storage(efs, fs_id, to_add, "EFS FileSystem", dry_run)
+                    to_add_fs.append({"Key": key, "Value": ""})
+                plan_or_apply_storage(fsx, arn, to_add_fs, f"FSx {fs_type} FileSystem", dry_run)
 
-                # Access Points – tag by AccessPointId (fsap-...)
-                try:
-                    aps = efs.describe_access_points(FileSystemId=fs_id).get("AccessPoints", [])
-                    for ap in aps:
-                        ap_id = ap["AccessPointId"]  # fsap-xxxx
-                        current_ap = get_current_tags_storage(efs, ap_id)
-                        if key in current_ap:
-                            continue
-                        plan_or_apply_storage(
-                            efs,
-                            ap_id,
-                            [{"Key": key, "Value": ""}],
-                            "EFS AccessPoint",
-                            dry_run,
-                        )
-                except ClientError as e:
-                    print(f"    [WARN] Access Points error: {e}")
-
-                # NOTE: Mount Targets are not taggable via EFS tagging APIs.
-                # We intentionally skip them to avoid bogus API calls.
-
-    except ClientError as e:
-        if "AccessDenied" in str(e):
-            print(
-                f"[EFS] Access denied in {region.upper()} – "
-                f"ensure elasticfilesystem:DescribeFileSystems/ListTagsForResource/TagResource are allowed."
-            )
-        else:
-            print(f"[EFS] AWS error in {region.upper()}: {e}")
-    except Exception as e:
-        print(f"[EFS] Unexpected error in {region.upper()}: {e}")
-
-    # === FSx ===
-    try:
-        fsx = boto3.client("fsx", region_name=region)
-        file_systems = fsx.describe_file_systems().get("FileSystems", [])
-
-        if not file_systems:
-            print(f"[FSx] No FSx file systems found in {region.upper()}")
-            return
-
-        for fs in file_systems:
-            fs_id = fs["FileSystemId"]
-            fs_type = fs["FileSystemType"]
-            arn = fs["ResourceARN"]
-            name_tag = next(
-                (t["Value"] for t in fs.get("Tags", []) if t["Key"].lower() == "name"),
-                None,
-            )
-            name = name_tag or fs_id
-            key = normalize_storage_key(name)
-
-            print(f"\n[FSx {fs_type}] {name} ({fs_id}) → Using tag key: '{key}'")
-
-            # FileSystem
-            current = get_current_tags_storage(fsx, arn)
-            to_add_fs: List[dict] = []
-            if "Name" not in current:
-                to_add_fs.append({"Key": "Name", "Value": name})
-            if key not in current:
-                to_add_fs.append({"Key": key, "Value": ""})
-            plan_or_apply_storage(fsx, arn, to_add_fs, f"FSx {fs_type} FileSystem", dry_run)
-
-            # Backups
-            backups = fsx.describe_backups(
-                Filters=[{"Name": "file-system-id", "Values": [fs_id]}]
-            ).get("Backups", [])
-            for backup in backups:
-                b_arn = backup["ResourceARN"]
-                current_b = get_current_tags_storage(fsx, b_arn)
-                if key not in current_b:
-                    plan_or_apply_storage(
-                        fsx,
-                        b_arn,
-                        [{"Key": key, "Value": ""}],
-                        "FSx Backup",
-                        dry_run,
-                    )
-
-            # Volumes (for ONTAP, WINDOWS, OPENZFS)
-            if fs_type in ("ONTAP", "WINDOWS", "OPENZFS"):
-                volumes = fsx.describe_volumes(
+                # Backups
+                backups = fsx.describe_backups(
                     Filters=[{"Name": "file-system-id", "Values": [fs_id]}]
-                ).get("Volumes", [])
-                for vol in volumes:
-                    v_arn = vol["ResourceARN"]
-                    current_v = get_current_tags_storage(fsx, v_arn)
-                    if key not in current_v:
+                ).get("Backups", [])
+                for backup in backups:
+                    b_arn = backup["ResourceARN"]
+                    current_b = get_current_tags_storage(fsx, b_arn)
+                    if key not in current_b:
                         plan_or_apply_storage(
                             fsx,
-                            v_arn,
+                            b_arn,
                             [{"Key": key, "Value": ""}],
-                            "FSx Volume",
+                            "FSx Backup",
                             dry_run,
                         )
 
-            # Storage Virtual Machines (ONTAP only)
-            if fs_type == "ONTAP":
-                svms = fsx.describe_storage_virtual_machines(
-                    Filters=[{"Name": "file-system-id", "Values": [fs_id]}]
-                ).get("StorageVirtualMachines", [])
-                for svm in svms:
-                    svm_arn = svm["ResourceARN"]
-                    current_s = get_current_tags_storage(fsx, svm_arn)
-                    if key not in current_s:
-                        plan_or_apply_storage(
-                            fsx,
-                            svm_arn,
-                            [{"Key": key, "Value": ""}],
-                            "FSx SVM",
-                            dry_run,
-                        )
+                # Volumes (for ONTAP, WINDOWS, OPENZFS)
+                if fs_type in ("ONTAP", "WINDOWS", "OPENZFS"):
+                    volumes = fsx.describe_volumes(
+                        Filters=[{"Name": "file-system-id", "Values": [fs_id]}]
+                    ).get("Volumes", [])
+                    for vol in volumes:
+                        v_arn = vol["ResourceARN"]
+                        current_v = get_current_tags_storage(fsx, v_arn)
+                        if key not in current_v:
+                            plan_or_apply_storage(
+                                fsx,
+                                v_arn,
+                                [{"Key": key, "Value": ""}],
+                                "FSx Volume",
+                                dry_run,
+                            )
 
-    except ClientError as e:
-        if "AccessDenied" in str(e):
-            print(
-                f"[FSx] Access denied or limited permissions in {region.upper()} – "
-                f"ensure fsx:Describe*/ListTagsForResource/TagResource are allowed."
-            )
-        else:
-            print(f"[FSx] AWS error in {region.upper()}: {e}")
-    except Exception as e:
-        print(f"[FSx] No FSx or permission issue in {region.upper()}: {e}")
+                # Storage Virtual Machines (ONTAP only)
+                if fs_type == "ONTAP":
+                    svms = fsx.describe_storage_virtual_machines(
+                        Filters=[{"Name": "file-system-id", "Values": [fs_id]}]
+                    ).get("StorageVirtualMachines", [])
+                    for svm in svms:
+                        svm_arn = svm["ResourceARN"]
+                        current_s = get_current_tags_storage(fsx, svm_arn)
+                        if key not in current_s:
+                            plan_or_apply_storage(
+                                fsx,
+                                svm_arn,
+                                [{"Key": key, "Value": ""}],
+                                "FSx SVM",
+                                dry_run,
+                            )
 
-
+        except ClientError as e:
+            if "AccessDenied" in str(e):
+                print(
+                    f"[FSx] Access denied or limited permissions in {region.upper()} – "
+                    f"ensure fsx:Describe*/ListTagsForResource/TagResource are allowed."
+                )
+            else:
+                print(f"[FSx] AWS error in {region.upper()}: {e}")
+        except Exception as e:
+            print(f"[FSx] No FSx or permission issue in {region.upper()}: {e}")
 # =============================================================================
 # ============================== MAIN CODE ====================================
 # =============================================================================
@@ -740,6 +767,16 @@ def main() -> None:
         else:
             regions = [value]
 
+    elif action in ("ec2", "ebs", "volumes", "snapshots", "fsx", "efs"):
+        # tagging ec2 [region] [--apply]
+        # tagging ebs [region] [--apply]
+        # tagging volumes [region] [--apply]
+        # etc.
+        if value is None:
+            regions = list_all_regions()
+        else:
+            regions = [value]
+
     else:
         parser.error(f"Unknown action: {action}")
 
@@ -768,6 +805,81 @@ def main() -> None:
             print(f"{'=' * 80}")
             ec2_client = boto3.client("ec2", region_name=region)
             fix_orphaned_ami_snapshots(ec2_client, dry_run)
+        return
+
+    # --------------------------------------------------
+    # Resource-specific modes (ec2, ebs, snapshots, fsx, efs)
+    # --------------------------------------------------
+    if action == "ec2":
+        print(f"\n{'DRY-RUN MODE' if dry_run else 'APPLY MODE – REAL CHANGES!'}")
+        print(f"Action: EC2 ONLY (instances + volumes + snapshots)")
+        print(f"Target regions: {', '.join(sorted(regions))}\n")
+        for region in sorted(regions):
+            process_region(region, dry_run, tag_instances=True, tag_volumes=True, tag_snapshots=True)
+        print("\n" + "═" * 80)
+        print("TAG PROPAGATION COMPLETED!")
+        print("→ EC2 instances + volumes + snapshots processed.")
+        print("═" * 80)
+        return
+
+    elif action == "ebs":
+        print(f"\n{'DRY-RUN MODE' if dry_run else 'APPLY MODE – REAL CHANGES!'}")
+        print(f"Action: EBS ONLY (volumes + snapshots)")
+        print(f"Target regions: {', '.join(sorted(regions))}\n")
+        for region in sorted(regions):
+            process_region(region, dry_run, tag_instances=False, tag_volumes=True, tag_snapshots=True)
+        print("\n" + "═" * 80)
+        print("TAG PROPAGATION COMPLETED!")
+        print("→ EBS volumes + snapshots processed.")
+        print("═" * 80)
+        return
+
+    elif action == "volumes":
+        print(f"\n{'DRY-RUN MODE' if dry_run else 'APPLY MODE – REAL CHANGES!'}")
+        print(f"Action: VOLUMES ONLY")
+        print(f"Target regions: {', '.join(sorted(regions))}\n")
+        for region in sorted(regions):
+            process_region(region, dry_run, tag_instances=False, tag_volumes=True, tag_snapshots=False)
+        print("\n" + "═" * 80)
+        print("TAG PROPAGATION COMPLETED!")
+        print("→ EBS volumes processed.")
+        print("═" * 80)
+        return
+
+    elif action == "snapshots":
+        print(f"\n{'DRY-RUN MODE' if dry_run else 'APPLY MODE – REAL CHANGES!'}")
+        print(f"Action: SNAPSHOTS ONLY")
+        print(f"Target regions: {', '.join(sorted(regions))}\n")
+        for region in sorted(regions):
+            process_region(region, dry_run, tag_instances=False, tag_volumes=False, tag_snapshots=True)
+        print("\n" + "═" * 80)
+        print("TAG PROPAGATION COMPLETED!")
+        print("→ EBS snapshots processed.")
+        print("═" * 80)
+        return
+
+    elif action == "fsx":
+        print(f"\n{'DRY-RUN MODE' if dry_run else 'APPLY MODE – REAL CHANGES!'}")
+        print(f"Action: FSx ONLY")
+        print(f"Target regions: {', '.join(sorted(regions))}\n")
+        for region in sorted(regions):
+            process_efs_and_fsx(region, dry_run, process_efs=False, process_fsx=True)
+        print("\n" + "═" * 80)
+        print("TAG PROPAGATION COMPLETED!")
+        print("→ FSx resources processed.")
+        print("═" * 80)
+        return
+
+    elif action == "efs":
+        print(f"\n{'DRY-RUN MODE' if dry_run else 'APPLY MODE – REAL CHANGES!'}")
+        print(f"Action: EFS ONLY")
+        print(f"Target regions: {', '.join(sorted(regions))}\n")
+        for region in sorted(regions):
+            process_efs_and_fsx(region, dry_run, process_efs=True, process_fsx=False)
+        print("\n" + "═" * 80)
+        print("TAG PROPAGATION COMPLETED!")
+        print("→ EFS resources processed.")
+        print("═" * 80)
         return
 
     # --------------------------------------------------
