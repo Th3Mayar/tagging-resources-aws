@@ -51,3 +51,11 @@ dist/
 *.egg-info
 
 .dev-venv
+# Debian build artifacts
+.pybuild/
+debian/.debhelper/
+debian/debhelper-build-stamp
+debian/files
+debian/*.substvars
+debian/*.debhelper
+debian/tagging-resources-aws/
