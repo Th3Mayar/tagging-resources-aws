@@ -3,7 +3,7 @@
 **The definitive, enterprise-grade tagging solution**  
 EC2 Instances · EBS Volumes · Snapshots · EFS · All FSx types · Cost Allocation Tags activation  
 
-## Overview & Capabilities (v0.1.4)
+## Overview & Capabilities (v0.1.5)
 
 | Feature                              | Description                                                                                          | Command example                                    |
 |--------------------------------------|------------------------------------------------------------------------------------------------------|----------------------------------------------------|
